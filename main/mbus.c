@@ -750,7 +750,7 @@ void togglePassthroughMode(){
 void processCommand(mbus_data_t *mbuspacket, char *name) { //emulator stuff and command extraction
   printf("%lu\tRXPKT BUS:%s SRC:%i DESC:%s raw:%s\n", xTaskGetTickCount(), name, mbuspacket->source, mbuspacket->description, mbuspacket->acRaw);
   emulatorMode(mbuspacket); //pass packet to emulator.
-  if(mbuspacket->cmd == rRepeatOne || mbuspacket->cmd == rRepeatOff) {
+  if(mbuspacket->cmd == rSelect) {
     if(magicSeqLastUpdate+2000 > xTaskGetTickCount()) {
       magicSeqCnt++;
       printf("magSeqCnt=%i\n",magicSeqCnt);

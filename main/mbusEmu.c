@@ -989,7 +989,7 @@ void cdcChangeInsertMag() { //fake radio we ejected our magazine (actual packets
 }
 
 
-void rLoadDisk(int disk) { //disk 4
+void rLoadDisk(int disk) {
 	setEmulatorBusy(1300);
 	cdcEmuPcktDisable();
 	//changeInterruptTimed(eRadio, false, 0);
@@ -1155,9 +1155,9 @@ void emuBTMode(bool state) {
 		if(!emuEnabled) { //if emu is disabled switch to emu mode and change disk to 7 (BT)
 			emuEnabled=true;
 			setPassthrough(false);
-			activateEmulationMode(1); // (6+2=7)
+			activateEmulationMode(1); // (6+1=7)
 		} else { //already in emu mode, just switch disk to 7 (BT)
-			rLoadDisk(1); // (6+2=7)
+			rLoadDisk(1); // (6+1=7)
 		}
 	}
 }
