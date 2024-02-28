@@ -6,9 +6,6 @@
 // config
 #include "include/config.h"
 
-
-
-
 void emulatorMode(const mbus_data_t *inpacket);
 void mbusEmuModeChange(bool newState);
 void mbusEmuInit();

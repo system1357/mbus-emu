@@ -27,6 +27,7 @@ void app_setup(void) {
 void app_main(void) {
     printf("[MAIN] Booting...\n");
     app_setup();
+    setPassthroughMode(false);
 
     for( ;; ) { // main loop, as we use tasks, timers and interrupts, this should stay clean.
       vTaskDelay(1000 / portTICK_PERIOD_MS);

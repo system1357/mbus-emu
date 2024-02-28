@@ -5,7 +5,7 @@
 #define CONFIG_PIN_MBUS_RADIO_IN GPIO_NUM_23
 #define CONFIG_PIN_MBUS_RADIO_OUT GPIO_NUM_22
 #define CONFIG_PIN_MBUS_CHANGER_IN GPIO_NUM_18
-#define CONFIG_PIN_MBUS_CHANGER_OUT GPIO_NUM_5 //replace with other, PWM on boot which resets rhe CDC during boot.
+#define CONFIG_PIN_MBUS_CHANGER_OUT GPIO_NUM_5 //replace with other, PWM on boot which resets the CDC during boot.
 //#define CONFIG_PIN_MBUS_CHANGER_OUT GPIO_NUM_19
 
 #define CONFIG_GPIO_INPUT_CDC_OUT GPIO_NUM_13
@@ -39,7 +39,6 @@
 // 34 INTCD
 // 35 BTAUDIO
 // 36 BTCALL
-// 39
 
 
 #endif

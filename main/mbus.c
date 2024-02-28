@@ -729,9 +729,7 @@ unsigned int magicSeqLastUpdate=0;
 void taskMagicSeq(mbus_data_t *mbuspacket) { //do stuff for magicSeq
   if(mbuspacket->cmd == rSelectDisk) {
     printf("Change DISK to %i\n", mbuspacket->disk );
-
   }
-
 }
 
 void setPassthrough(bool newMode) {

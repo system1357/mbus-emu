@@ -258,14 +258,7 @@ void IRAM_ATTR gpio_timer_writeNextBitChanger(void* arg);
 void IRAM_ATTR func_timerWriteNextCommandRadio(void* arg);
 void IRAM_ATTR func_timerWriteNextCommandChanger(void* arg);
 
-
 //test(char *mbusPacket, int time);
-
-
-
-
-
-
 
 int8_t calc_checksum(char *buffer, uint8_t len);
 int8_t calc_checksum2(mbus_packet_t *buffer);
@@ -288,9 +281,7 @@ void changeInterruptTimed(int dest, bool state, int time);
 void setPassthrough(bool newMode);
 void setPassthroughMode(bool newMode);
 
-void network_debug(bool newState);
 void mbus_debug(bool newState);
-void mbusEmu_debug(bool newState);
 
 
 #endif
