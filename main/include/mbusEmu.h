@@ -1,10 +1,6 @@
 #ifndef __MBUSEMU_H
 #define __MBUSEMU_H
-#include "esp_timer.h"
 #include "include/mbus.h"
-
-// config
-#include "include/config.h"
 
 void emulatorMode(const mbus_data_t *inpacket);
 void mbusEmuInit();

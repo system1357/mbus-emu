@@ -2,9 +2,6 @@
 #define __MBUS_H
 #include "esp_timer.h"
 
-// config
-#include "include/config.h"
-
 
 #define BCD2INT(n) (((n)/16) * 10 + ((n) % 16)) 				// for max. 2 digits
 #define INT2BCD(n) (((n)/10) * 16 + ((n) % 10)) 				// for max. 2 digits
@@ -253,9 +250,7 @@ uint8_t mbus_encode(mbus_data_t *mbuspacket, char *packet_dest);
 
 void mbusSendRadio(char *mbusPacket);
 void processCommand(mbus_data_t *mbuspacket, char *name);
-
 void mbus_setup(void);
-
 void sendTimedCmd(char *mbusPacket, int time, int dest);
 void changeInterruptTimed(int dest, bool state, int time);
 

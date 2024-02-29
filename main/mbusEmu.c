@@ -38,8 +38,6 @@
 #include "include/mbusEmu.h"
 #include "include/mbus.h"
 
-#include "esp_timer.h"
-
 
 bool emuDebug=true;
 

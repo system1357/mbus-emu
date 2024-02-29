@@ -1,4 +1,4 @@
-menu "A2DP Example Configuration"
+menu "MBus Emu Configuration"
     config  EXAMPLE_A2DP_SINK_SSP_ENABLED
         bool "Secure Simple Pairing"
         depends on BT_CLASSIC_ENABLED
@@ -47,5 +47,17 @@ menu "A2DP Example Configuration"
         depends on EXAMPLE_A2DP_SINK_OUTPUT_EXTERNAL_I2S
         help
             GPIO number to use for I2S Data Driver.
+    
+    config PIN_MBUS_RADIO_IN
+        int "MBUS DATA IN"
+        default 18
+        help
+            GPIO number to use for M-Bus Data In.
+
+    config PIN_MBUS_RADIO_OUT
+        int "MBUS DATA OUT"
+        default 19
+        help
+            GPIO number to use for M-Bus Data In.
 
 endmenu
