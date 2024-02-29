@@ -7,7 +7,6 @@
 #include "include/config.h"
 
 void emulatorMode(const mbus_data_t *inpacket);
-void mbusEmuModeChange(bool newState);
 void mbusEmuInit();
 
 void cdcEmuPcktDisable();
@@ -22,10 +21,5 @@ void cdcChangeEjectMag();
 void cdcChangeInsertMag();
 void cdcChangeLoadDisk(int disk);
 void rLoadDisk(int disk);
-
-void emuPhoneMode(bool state);
-void emuIntCDMode(bool state);
-void emuBTMode(bool state);
-
 
 #endif

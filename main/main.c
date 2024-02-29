@@ -14,14 +14,12 @@
 
 // application includes
 #include "include/mbus.h"
-#include "include/io.h"
 #include "include/bt.h"
 
 // setup functions.
 void app_setup(void) {
   ESP_LOGI("SETUP", "Initializing...");
   gpio_install_isr_service(ESP_INTR_FLAG_SHARED); //enable shared interrupts
-  io_setup();
   mbus_setup();
   bt_setup();
 }
