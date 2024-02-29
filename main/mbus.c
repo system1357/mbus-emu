@@ -27,25 +27,17 @@
 
 // queues
 QueueHandle_t mbusRadioBitIn;
-QueueHandle_t mbusChangerBitIn;
 QueueHandle_t mbusRadioBitOut;
-QueueHandle_t mbusChangerBitOut;
 
 // timer vars
 
 esp_timer_handle_t gpio_timer_readHandleRadio;
-esp_timer_handle_t gpio_timer_readHandleChanger;
 esp_timer_handle_t packetDone_timer_handleRadio;
-esp_timer_handle_t packetDone_timer_handleChanger;
 esp_timer_handle_t gpio_timer_writeHandleRadio;
-esp_timer_handle_t gpio_timer_writeHandleChanger;
 esp_timer_handle_t gpio_timer_writeNextBitHandleRadio;
-esp_timer_handle_t gpio_timer_writeNextBitHandleChanger;
 esp_timer_handle_t timerHandleWriteNextCommandRadio;
-esp_timer_handle_t timerHandleWriteNextCommandChanger;
 
 esp_timer_handle_t busFree_timer_handleRadio;
-esp_timer_handle_t busFree_timer_handleChanger;
 
 mbus_packet_t radioMbusRx;
 
@@ -558,9 +550,6 @@ void swek(void* arg){
   pst->ready=false;
   mbusSendRadio(pst->mbusPacket);
   esp_timer_delete(pst->timerHandle); //clean up
-}
-
-void createTimer(int type, esp_timer_cb_t callback, int data) { //todo create a wrapper with creation of dynamic timers
 }
 
 void sendTimedCmd(char *mbusPacket, int time, int dest) {
