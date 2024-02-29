@@ -1,6 +1,8 @@
 #ifndef __MBUS_H
 #define __MBUS_H
-#include "esp_timer.h"
+
+// FreeRTOS includes
+#include "freertos/queue.h"
 
 // config
 #include "include/config.h"
@@ -229,19 +231,64 @@ typedef struct {
   int data;
 } dynamicTimers_t;
 
+
+mbus_packet_t radioMbusRx;
+mbus_packet_t changerMbusRx;
+
+mbus_packet_t radioMbusTx;
+mbus_packet_t changerMbusTx;
+
 static const mbus_packet_t MBUSEMPTY;
 
-//very fast routines
+// function declerations
+// static void gpio_timer_readRadio(void* arg);
+// static void gpio_timer_readChanger(void* arg);
+// static void packetDone_timer_radio(void* arg);
+// static void packetDone_timer_changer(void* arg);
+
+//very fast routines routines
 void IRAM_ATTR gpio_isr_handlerRadio(void* arg);
+void IRAM_ATTR gpio_isr_handlerChanger(void* arg);
 void IRAM_ATTR radioWriteBit();
+void IRAM_ATTR changerWriteBit();
 void IRAM_ATTR timer_cdcChanger(void* arg);
 void IRAM_ATTR gpio_timer_readRadio(void* arg);
+void IRAM_ATTR gpio_timer_readChanger(void* arg);
 void IRAM_ATTR packetDone_timer_radio(void* arg);
+void IRAM_ATTR packetDone_timer_changer(void* arg);
 void IRAM_ATTR gpio_timer_writeRadio(void* arg);
+void IRAM_ATTR gpio_timer_writeChanger(void* arg);
 void IRAM_ATTR gpio_timer_writeNextBitRadio(void* arg);
+void IRAM_ATTR gpio_timer_writeNextBitChanger(void* arg);
 void IRAM_ATTR func_timerWriteNextCommandRadio(void* arg);
+void IRAM_ATTR func_timerWriteNextCommandChanger(void* arg);
+
 
 //test(char *mbusPacket, int time);
+
+// queues
+xQueueHandle mbusRadioBitIn;
+xQueueHandle mbusChangerBitIn;
+xQueueHandle mbusRadioBitOut;
+xQueueHandle mbusChangerBitOut;
+
+// timer vars
+
+esp_timer_handle_t gpio_timer_readHandleRadio;
+esp_timer_handle_t gpio_timer_readHandleChanger;
+esp_timer_handle_t packetDone_timer_handleRadio;
+esp_timer_handle_t packetDone_timer_handleChanger;
+esp_timer_handle_t gpio_timer_writeHandleRadio;
+esp_timer_handle_t gpio_timer_writeHandleChanger;
+esp_timer_handle_t gpio_timer_writeNextBitHandleRadio;
+esp_timer_handle_t gpio_timer_writeNextBitHandleChanger;
+esp_timer_handle_t timerHandleWriteNextCommandRadio;
+esp_timer_handle_t timerHandleWriteNextCommandChanger;
+
+esp_timer_handle_t busFree_timer_handleRadio;
+esp_timer_handle_t busFree_timer_handleChanger;
+
+
 
 int8_t calc_checksum(char *buffer, uint8_t len);
 int8_t calc_checksum2(mbus_packet_t *buffer);
@@ -252,14 +299,21 @@ uint8_t mbus_decode(mbus_data_t *mbuspacket, char *packet_src, size_t len);
 uint8_t mbus_encode(mbus_data_t *mbuspacket, char *packet_dest);
 
 void mbusSendRadio(char *mbusPacket);
+void mbusSendChanger(char *mbusPacket);
 void processCommand(mbus_data_t *mbuspacket, char *name);
 
 void mbus_setup(void);
 
+void disableInterrupt(int source);
+void enableInterrupt(int source);
 void sendTimedCmd(char *mbusPacket, int time, int dest);
 void changeInterruptTimed(int dest, bool state, int time);
+void setPassthrough(bool newMode);
+void setPassthroughMode(bool newMode);
 
+void network_debug(bool newState);
 void mbus_debug(bool newState);
+void mbusEmu_debug(bool newState);
 
 
 #endif

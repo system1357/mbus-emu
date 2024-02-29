@@ -37,8 +37,7 @@
 
 #include "include/mbusEmu.h"
 #include "include/mbus.h"
-
-#include "esp_timer.h"
+#include "include/io.h"
 
 
 bool emuDebug=true;
@@ -51,7 +50,8 @@ mbus_data_t status_packet;			// player state   - decoded outgoing packet : repre
 
 uint16_t player_sec = 0;
 
-esp_timer_handle_t timer_cdcEmu_handle;
+char mbus_outbuffer[MBUS_BUFFER];	// global codec buffer for the driver
+char mbus_inbuffer[MBUS_BUFFER];	// stores incoming message
 
 int (*cmd_funct)(void);
 command_t cur_cmd = eeInvalid;
@@ -75,7 +75,7 @@ bool radioOff=false;
  \____\___/|_| |_| |_|_| |_| |_|\__,_|_| |_|\__,_|___/
 */
 /*
- * Perfom action for received command
+ * Perfom action for reveived command
  *
  * The next action is programmed by setting a new command and return with reply.
  * Otherwise, if return ok, no more messages are sent.
@@ -502,6 +502,14 @@ int (*cmd_state[])(void) = {
 	status2_self,
 };
 
+bool emuEnabled=0;
+int emuMode=0;
+int emuModeCount=0;
+
+
+
+
+
 int curDisk=0;
 int curDiskTracks=0;
 int curDiskTimeMin=0;
@@ -621,6 +629,8 @@ void setEmulatorBusy(int time) {
 	emulatorReady=false;
 }
 
+
+
 void emulatorMode(const mbus_data_t *inpacket) {
 	mbus_data_t tmpPacket;
 	char localmbus_outbuffer[MBUS_BUFFER];
@@ -643,6 +653,10 @@ void emulatorMode(const mbus_data_t *inpacket) {
 		} else {
 			return;
 		}
+	}
+
+	if(!emuEnabled) { //end function if passthrough
+		return;
 	}
 
 	if(emulatorBusyTime < xTaskGetTickCount()) { //end if emulator is busy sending an array of commands
@@ -710,19 +724,19 @@ void emulatorMode(const mbus_data_t *inpacket) {
 		} else {
 			tmpPacket.cmd=cAck;
 			mbus_encode(&tmpPacket, localmbus_outbuffer);
-			//  sendTimedCmd(localmbus_outbuffer, 0, eRadio); // ACK/WAIT
-			//  sendTimedCmd(localmbus_outbuffer, 50, eRadio); // ACK/WAIT
-			// 	tmpPacket.cmd=cPreparing;
-			// 	tmpPacket.track=0;
-			// 	tmpPacket.index=0;
-			// 	tmpPacket.minutes = 0;
-			// 	tmpPacket.seconds = 0;
-			// 	tmpPacket.flags = 0x001;
-    		// 	mbus_encode(&tmpPacket, localmbus_outbuffer);
-			// 	printf("cPreparing PACKET:%i d:%d t:%i i:%i m:%i s:%i flags:%u cmd:%s\n", tmpPacket.cmd, tmpPacket.disk, tmpPacket.track, response_packet.index, tmpPacket.minutes, tmpPacket.seconds, tmpPacket.flags, localmbus_outbuffer);
-    		// 	sendTimedCmd(localmbus_outbuffer, 0, eRadio);
-			// 	sendTimedCmd(localmbus_outbuffer, 50, eRadio);
+			//sendTimedCmd(localmbus_outbuffer, 0, eRadio); // ACK/WAIT
+			//sendTimedCmd(localmbus_outbuffer, 50, eRadio); // ACK/WAIT
 		}
+	// 	tmpPacket.cmd=cPreparing;
+	// 	tmpPacket.track=0;
+	// 	tmpPacket.index=0;
+	// 	tmpPacket.minutes = 0;
+	// 	tmpPacket.seconds = 0;
+	// 	tmpPacket.flags = 0x001;
+    // 	mbus_encode(&tmpPacket, localmbus_outbuffer);
+	// 	printf("cPreparing PACKET:%i d:%d t:%i i:%i m:%i s:%i flags:%u cmd:%s\n", tmpPacket.cmd, tmpPacket.disk, tmpPacket.track, response_packet.index, tmpPacket.minutes, tmpPacket.seconds, tmpPacket.flags, localmbus_outbuffer);
+    // 	//sendTimedCmd(localmbus_outbuffer, 0, eRadio);
+	// 	sendTimedCmd(localmbus_outbuffer, 50, eRadio);
 	} else if(inpacket->cmd == rSkip) {
 		printf("SkipTrack: %i\n", BCD2INT(inpacket->track));
 		int cTrackNum=BCD2INT(inpacket->track);
@@ -741,7 +755,9 @@ void emulatorMode(const mbus_data_t *inpacket) {
 		curFlags |=  0x800;
 	} else if(inpacket->cmd == rSelectDisk && emulatorReady) {
 		printf("SelectDisk: %i\n", inpacket->disk);
+		//switchEmuCD(BCD2INT(inpacket->disk));
 		rLoadDisk(BCD2INT(inpacket->disk));
+
 	} else if(inpacket->cmd == rStatus && emulatorReady) { //this packet is requested when the radio loses sync with cdc? Resend current EMU status
 		sendTimedCmd("810A", 50, eRadio); // 810A?
 
@@ -765,7 +781,14 @@ void emulatorMode(const mbus_data_t *inpacket) {
 		mbus_encode(&tmpPacket, localmbus_outbuffer);
 		sendTimedCmd(localmbus_outbuffer, 1000, eRadio);
 		//sendTimedCmd("9B9401000010", 1000, eRadio);
+		
+		
+	} else if(emuMode==0) { //pretend to eject mag
+
 	} else {
+	// if (ok == rc) {
+    // 	return;
+	// }
 	if (reply == rc) {
 		if (inpacket->source == eRadio) { //process only radio
 			//char localmbus_outbuffer[MBUS_BUFFER];
@@ -789,13 +812,14 @@ void emulatorMode(const mbus_data_t *inpacket) {
 	}
 }
 
-void timer_cdcChanger(void* arg) { //pretend to be playing. send repeating packet with same seconds
+void IRAM_ATTR timer_cdcChanger(void* arg) { //pretend to be playing. send repeating packet with same seconds
 	mbus_data_t tmpPacket;
 	//if (status_packet.cmd == cPlaying)
     	player_sec++;
 
   	if (player_sec >= 5400)   // after 90 minutes reset the counter
     	player_sec = 0;
+	//curTrack++;
 
 	tmpPacket.cmd=cPlaying;
 	tmpPacket.disk=curDisk;
@@ -803,6 +827,8 @@ void timer_cdcChanger(void* arg) { //pretend to be playing. send repeating packe
 	tmpPacket.index=curIndex;
     tmpPacket.minutes = INT2BCD(player_sec / 60);
 	tmpPacket.seconds = INT2BCD(player_sec % 60);
+	//tmpPacket.minutes = curMin;
+	//tmpPacket.seconds = curSec;
 	tmpPacket.flags = curFlags;
 
 	char localmbus_outbuffer[MBUS_BUFFER];
@@ -820,6 +846,32 @@ int preEmuTotalSec=0;
 int preEmuMin=0;
 int preEmuSec=0;
 
+
+void deactivateEmulationMode() { //fool the radio unload and reload "previous disk" to "continue"
+	setEmulatorBusy(1200);
+	mbus_data_t tmpPacket;
+	char localmbus_outbuffer[MBUS_BUFFER];
+	tmpPacket.disk=INT2BCD(curDisk);
+	tmpPacket.track=INT2BCD(curDiskTracks); //convert magic to BCD
+	//tmpPacket.index=curIndex;
+    //response_packet.minutes = INT2BCD(player_sec / 60);
+	//response_packet.seconds = INT2BCD(player_sec % 60);
+	tmpPacket.minutes = INT2BCD(curDiskTimeMin);
+	tmpPacket.seconds = INT2BCD(curDiskTimeSec);
+	tmpPacket.flags = curFlags;
+
+	esp_timer_stop(timer_cdcEmu_handle);
+
+	tmpPacket.cmd = rPlay;
+	mbus_encode(&tmpPacket, localmbus_outbuffer);
+	sendTimedCmd(localmbus_outbuffer, 900, eCD); //send Play
+	sendTimedCmd(localmbus_outbuffer, 1000, eCD); //send Play
+	changeInterruptTimed(eCD, true, 1100); //Enable cdc interrupts after 600ms (removes extra garbage from cdc bus)
+	curTrack=preEmuTrack;
+	rLoadDisk(preEmuDisk);
+	io_switchInput(inCDC);
+}
+
 void activateEmulationMode(int mode) {
 	setEmulatorBusy(100);
 	mbus_data_t tmpPacket;
@@ -833,17 +885,30 @@ void activateEmulationMode(int mode) {
 	preEmuMin=INT2BCD(curMin);
 	preEmuSec=INT2BCD(curSec);
 
+	disableInterrupt(eCD);
 	rLoadDisk(mode);
 
 	printf("Activate emu! D:%i t:%i i:%i m:%i s:%i tt:%i tm:%i ts:%i\n",
 		BCD2INT(preEmuDisk), BCD2INT(preEmuTrack), BCD2INT(preEmuIndex), BCD2INT(preEmuMin), BCD2INT(preEmuSec), 
 		BCD2INT(preEmuNumTracks), BCD2INT(preEmuTotalMin), BCD2INT(preEmuTotalSec));
+	emuMode=0;
+	emuModeCount=0;
 	esp_timer_start_periodic(timer_cdcEmu_handle, 1000000); //update playback state every second.
 
 	tmpPacket.cmd = rPowerdown;
     mbus_encode(&tmpPacket, localmbus_outbuffer);
 	sendTimedCmd(localmbus_outbuffer, 100, eCD); //send Play
 	sendTimedCmd(localmbus_outbuffer, 50, eCD); //send Play
+
+}
+
+void mbusEmuModeChange(bool newState) {
+  emuEnabled=newState;
+  if(newState) { //start emu mode
+	activateEmulationMode(1);	//trigger events required for emulationMode
+  } else { //stop emu mode
+	deactivateEmulationMode(); //try to resume playback
+  }
 }
 
 void mbusEmuInit() {
@@ -856,8 +921,9 @@ void mbusEmuInit() {
   	};
   	ESP_ERROR_CHECK(esp_timer_create(&timer_cdcEmu_args, &timer_cdcEmu_handle));
 	printf("[ DONE ]\n");
-	activateEmulationMode(1);
 }
+
+
 
 // start/stop sending cPlaying packets.
 void cdcEmuPcktDisable() {
@@ -891,7 +957,7 @@ void cdcChangeEjectMag() { //fake radio we ejected our magazine (actual packets 
 	sendTimedCmd("9BA1002000A2", 1999, eRadio); // no mag
 }
 
-void cdcChangeInsertMag() { //fake radio we inserted our magazine (actual packets snooped from the bus)
+void cdcChangeInsertMag() { //fake radio we ejected our magazine (actual packets snooped from the bus)
 	setEmulatorBusy(2000);
 	curDisk=1;
 	curTrack=1;
@@ -904,6 +970,7 @@ void cdcChangeInsertMag() { //fake radio we inserted our magazine (actual packet
 	sendTimedCmd("9BC100100010", 650, eRadio); // cChanging3
 	sendTimedCmd("9F00296C", 750, eRadio); // ACK/WAIT
 	sendTimedCmd("9B810010001C", 850, eRadio); // cChanging4
+
 	sendTimedCmd("9F005561", 950, eRadio); // ACK/WAIT
 	sendTimedCmd("9B910000001C", 1050, eRadio); // Changing
 	sendTimedCmd("9F005561", 1150, eRadio); // ACK/WAIT
@@ -915,16 +982,21 @@ void cdcChangeInsertMag() { //fake radio we inserted our magazine (actual packet
 	sendTimedCmd("9D000000005", 1750, eRadio); // ACK/WAIT
 	sendTimedCmd("9950101000000015", 1850, eRadio); // ACK/WAIT
 	sendTimedCmd("9F005561", 1950, eRadio); // ACK/WAIT
-	cdcEmuPcktEnable();
+	if(emuEnabled) {
+		cdcEmuPcktEnable();
+	}
 }
 
 
-void rLoadDisk(int disk) {
+void rLoadDisk(int disk) { //disk 4
 	setEmulatorBusy(1300);
 	cdcEmuPcktDisable();
 	//changeInterruptTimed(eRadio, false, 0);
 	player_sec=0;
 	curDisk=disk;
+	if(emuEnabled) { //if emu enabled, let the user know we are in a "special" mode.
+ 		curDisk=6+disk;
+	}
  	curTrack=1;
 	mbus_data_t tmpPacket;
 	char localmbus_outbuffer[MBUS_BUFFER];
@@ -980,7 +1052,10 @@ void rLoadDisk(int disk) {
 	sendTimedCmd("9D000000005", 1100, eRadio); // ACK/WAIT
 	sendTimedCmd("9950101000000015", 1200, eRadio); // spinup
 	sendTimedCmd("9F005561", 1300, eRadio); // ACK/WAIT
-	cdcEmuPcktEnable();
+	if(emuEnabled) {
+		io_switchInput(disk);
+		cdcEmuPcktEnable(); //only resume sending packets if emu is enabled.
+	}
 }
 
 
@@ -1034,6 +1109,54 @@ void cdcChangeLoadDisk(int disk) {
 	sendTimedCmd(localmbus_outbuffer, 50, eCD);
 }
 
+
 void mbusEmu_debug(bool newState) {
   emuDebug=true;
+}
+
+
+int phoneModePrev=0;
+void emuPhoneMode(bool state) {
+	if(state) {
+		phoneModePrev=curDisk;
+		if(!emuEnabled) { //if not in emu mode, powerdown CDC and spoof track
+			disableInterrupt(eCD);
+			cdcEmuPcktEnable();
+			cdcChangePwrDn();
+		} else if(curDisk==8) { //indash cd pause we need to probe the intcd to see if we can resume playback
+		}
+		//phoneModePrevTrack=curTrack;
+		//curTrack=99;
+	} else {
+		if(!emuEnabled) {	//if not in emu mode, resume CDC
+			//curTrack=phoneModePrevTrack;
+			changeInterruptTimed(eCD, true, 600);
+			cdcChangePlay();
+			cdcEmuPcktDisable();
+		}		
+	}
+}
+
+void emuIntCDMode(bool state) {
+	if(state) { // switch to intcd
+		if(!emuEnabled) { //if emu is disabled switch to emu mode and change disk to 8 (INTCD)
+			emuEnabled=true;
+			setPassthrough(false);
+			activateEmulationMode(2); // (6+2=8)
+		} else { //already in emu mode, just switch disk to 8 (intcd)
+			rLoadDisk(2); // (6+2=8)
+		}
+	}
+}
+
+void emuBTMode(bool state) {
+	if(state) { // switch to intcd
+		if(!emuEnabled) { //if emu is disabled switch to emu mode and change disk to 7 (BT)
+			emuEnabled=true;
+			setPassthrough(false);
+			activateEmulationMode(1); // (6+2=7)
+		} else { //already in emu mode, just switch disk to 7 (BT)
+			rLoadDisk(1); // (6+2=7)
+		}
+	}
 }

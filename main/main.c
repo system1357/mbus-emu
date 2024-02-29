@@ -5,7 +5,6 @@
 // Platform generic includes
 #include <stdio.h>
 #include "sdkconfig.h"
-#include "esp_log.h"
 
 // FreeRTOS includes
 #include "freertos/FreeRTOS.h"
@@ -14,22 +13,24 @@
 
 // application includes
 #include "include/mbus.h"
-#include "include/bt.h"
+#include "include/network.h"
+#include "include/io.h"
 
 // setup functions.
 void app_setup(void) {
-  ESP_LOGI("SETUP", "Initializing...");
+  printf("[SETUP] Initializing...\n");
   gpio_install_isr_service(ESP_INTR_FLAG_SHARED); //enable shared interrupts
+  io_setup();
   mbus_setup();
-  bt_setup();
+  network_setup();
 }
 
 // entry point
 void app_main(void) {
-    ESP_LOGI("Main", "Booting...");
+    printf("[MAIN] Booting...\n");
     app_setup();
 
     for( ;; ) { // main loop, as we use tasks, timers and interrupts, this should stay clean.
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      vTaskDelay(1000 / portTICK_RATE_MS);
     }
 }

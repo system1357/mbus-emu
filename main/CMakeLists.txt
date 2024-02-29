@@ -1,2 +1,7 @@
-idf_component_register(SRCS "bt.c" "main.c" "mbus.c" "mbusEmu.c" "bt_app_av.c" "bt_app_core.c"
+idf_component_register(SRCS 
+"main.c" 
+"mbus.c" 
+"mbusEmu.c" 
+"network.c"
+"io.c"
                     INCLUDE_DIRS ".")
