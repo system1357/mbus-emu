@@ -129,6 +129,7 @@ static struct gatts_profile_inst gl_profile_tab[PROFILE_NUM] = {
         .gatts_if = ESP_GATT_IF_NONE,       /* Not get the gatt_if, so initial is ESP_GATT_IF_NONE */
     },
 };
+
 static void ble_init_adv_data(const char *name)
 {
     int len = strlen(name);
@@ -276,7 +277,7 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
         rsp.attr_value.handle = param->read.handle;
         rsp.attr_value.len = 4;
         rsp.attr_value.value[0] = 0xde;
-        rsp.attr_value.value[1] = 0xed;
+        rsp.attr_value.value[1] = 0xad;
         rsp.attr_value.value[2] = 0xbe;
         rsp.attr_value.value[3] = 0xef;
         esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id,
@@ -603,7 +604,7 @@ static void ble_gatts_init(void)
     }
     esp_err_t local_mtu_ret = esp_ble_gatt_set_local_mtu(500);
     if (local_mtu_ret){
-        ESP_LOGE(BT_BLE_COEX_TAG, "set local  MTU failed, error code = 0x%x", local_mtu_ret);
+        ESP_LOGE(BT_BLE_COEX_TAG, "set local MTU failed, error code = 0x%x", local_mtu_ret);
     }
 }
 

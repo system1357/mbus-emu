@@ -69,7 +69,7 @@ typedef enum {
 	rPlay,
 	rPause,
 	rStop,
-  rPowerdown,
+	rPowerdown,
 	rScnStop,
 	rPlayFF,
 	rPlayFR,
@@ -79,14 +79,14 @@ typedef enum {
 	rResumeP,
 	rNextMix,
 	rPrevMix,
-  rSkip,
+	rSkip,
 	rRepeatOff,
 	rRepeatOne,
 	rRepeatAll,
 	rScan,
 	rMix,
 	rSelect,
-  rSelectDisk,
+	rSelectDisk,
 	rStatus,
 	// changer to radio
 	cPingOK,
@@ -107,7 +107,7 @@ typedef enum {
 	cChanging4,
 	cNoMagzn,
 	cStatus,
-  cStatus1,
+	cStatus1,
 	cStat1,
 	cStat2,
 } command_t;
@@ -137,7 +137,7 @@ typedef struct {
 
 /* One entry in the coding table */
 typedef struct
-{	// one entry in the coding table
+{
 	command_t cmd;
 	char hexmask[32];
 	char infotext[32];
@@ -161,7 +161,7 @@ static const code_item_t alpine_codetable[] =
 	{ rPlay,    		"11101", 			      "Play               " },
 	{ rPause,   		"11102", 			      "Pause              " },
 	{ rStop,    		"11140", 			      "Stop               " },
-  { rPowerdown,		"11142", 			      "Powerdown          " },
+	{ rPowerdown,		"11142", 			      "Powerdown          " },
 	{ rScnStop, 		"11150", 			      "Scan Stop          " },
 	{ rPlayFF,  		"11105", 			      "Play FF start      " },
 	{ rPlayFR,  		"11109", 			      "Play FR start      " },
@@ -171,9 +171,9 @@ static const code_item_t alpine_codetable[] =
 	{ rResumeP, 		"11182", 			      "Pause fr curr. pos." },
 	{ rNextMix, 	  "1130A31", 			    "next random" },
 	{ rPrevMix, 	  "1130B31", 			    "previous random" },
-  { rSkip,        "1130tt1",          "Skip Track"},
+	{ rSkip,        "1130tt1",          "Skip Track"},
 	{ rSelect,  		"113dttff", 		    "Select             " }, 			// f0=1:playing, f0=2:paused, f1=4:random
-  { rSelectDisk,  "113d001",          "Select Disk        " },      // f=disk no 1-6
+	{ rSelectDisk,  "113d001",          "Select Disk        " },      // f=disk no 1-6
 	{ rRepeatOff, 	"1140000", 		      "Repeat Off         " },
 	{ rRepeatOne, 	"1144000", 		      "Repeat One         " },
 	{ rRepeatAll, 	"11480000", 		    "Repeat All         " },
@@ -189,7 +189,7 @@ static const code_item_t alpine_codetable[] =
 	{ cChanging3, 	"9BCd00fff0f", 		  "LoadDisk Phase 3   " },
 	{ cChanging4, 	"9B8d00fff0f", 		  "CheckDisk Changing Phase 4   " },
 	{ cStatus, 			"9Cd01ttmmssf", 	  "Disk Status        " },
-  { cStatus1, 		"1Cd01ttmmssf", 	  "Disk Status1       " },
+	{ cStatus1, 		"1Cd01ttmmssf", 	  "Disk Status1       " },
 	{ cStat1, 			"9D000fffff", 		  "Some status?       " },
 	{ cStat2, 			"9E0000000", 		    "Some more status?  " },
 	{ eeInvalid, 		"0", 				        "Idle               " },
@@ -237,8 +237,6 @@ void IRAM_ATTR packetDone_timer_radio(void* arg);
 void IRAM_ATTR gpio_timer_writeRadio(void* arg);
 void IRAM_ATTR gpio_timer_writeNextBitRadio(void* arg);
 void IRAM_ATTR func_timerWriteNextCommandRadio(void* arg);
-
-//test(char *mbusPacket, int time);
 
 int8_t calc_checksum(char *buffer, uint8_t len);
 int8_t calc_checksum2(mbus_packet_t *buffer);
